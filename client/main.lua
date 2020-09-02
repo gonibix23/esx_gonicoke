@@ -12,6 +12,7 @@ local spawnAll = false
 local delivering = false
 local collecting = false
 local can = false
+local triggerServer = false
 local cokeRecolected = 0
 
 Citizen.CreateThread(function()
@@ -35,20 +36,27 @@ RegisterCommand('off', function()
 	working = false
 end, false)
 
+RegisterNetEvent('esx_gonicoke:startVan')
+AddEventHandler('esx_gonicoke:startVan', function()
+	triggerServer = true
+end)
+
 CreateThread(function()
 	while true do
 		Citizen.Wait(0)
-		if IsControlJustPressed(0, 29) then
+		if triggerServer == true then
 			randomJobZone = math.random(0, 2)
 			createMissionBlip()
 			ESX.ShowHelpNotification('~b~Ve a buscar el furgon con la coca~b~')
 			working = true
 			spawnAll = true
+			triggerServer = false
 		end
 		if GetEntityHealth(PlayerPedId(-1)) <= 0 then
 			working = false
 			delivering = false
 			spawnAll = false
+			collecting = false
 			RemoveBlip(cokeCarBlip)
 			RemoveBlip(cokeDeliverBlip)
 		end
@@ -72,10 +80,12 @@ CreateThread(function()
 			ESX.ShowHelpNotification("~b~Presiona ~INPUT_CONTEXT~ para recoger la coca~b~")
 			if IsControlJustPressed(0, 54) then
 				cokeRecolected = cokeRecolected-1
+				FreezeEntityPosition(PlayerPedId(-1), true)
 				TaskStartScenarioInPlace(PlayerPedId(-1), "PROP_HUMAN_BUM_BIN", 0, true)
 				Citizen.Wait(3000)
 				TaskStartScenarioInPlace(PlayerPedId(-1), "PROP_HUMAN_BUM_BIN", 0, false)
 				Citizen.Wait(3000)
+				FreezeEntityPosition(PlayerPedId(-1), false)
 				ClearPedTasksImmediately(PlayerPedId(-1))
 				TriggerServerEvent('esx_gonicoke:receiveCoke')
 				can = true
@@ -178,3 +188,4 @@ function createCokeBlocks()
 	end
 	
 end
+
