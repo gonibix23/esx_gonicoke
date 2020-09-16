@@ -12,7 +12,6 @@ local spawnAll = false
 local delivering = false
 local collecting = false
 local can = false
-local triggerServer = false
 local cokeRecolected = 0
 
 Citizen.CreateThread(function()
@@ -32,33 +31,39 @@ AddEventHandler('esx:setJob', function(job)
   PlayerData.job = job
 end)
 
-RegisterCommand('off', function()
-	working = false
-end, false)
-
 RegisterNetEvent('esx_gonicoke:startVan')
 AddEventHandler('esx_gonicoke:startVan', function()
-	triggerServer = true
+	if working == true then
+		RemoveBlip(cokeCarBlip)
+		working = false
+	end
+	if delivering == true then
+		RemoveBlip(cokeDeliverBlip)
+		delivering = false
+	end
+	randomJobZone = math.random(0, 2)
+	createMissionBlip()
+	ESX.ShowHelpNotification('~b~Ve a buscar el furgon con la coca~b~')
+	working = true
+	spawnAll = true
+	triggerServer = false
+	collecting = false
 end)
 
-CreateThread(function()
+Citizen.CreateThread(function()
 	while true do
 		Citizen.Wait(0)
-		if triggerServer == true then
-			randomJobZone = math.random(0, 2)
-			createMissionBlip()
-			ESX.ShowHelpNotification('~b~Ve a buscar el furgon con la coca~b~')
-			working = true
-			spawnAll = true
-			triggerServer = false
-		end
 		if GetEntityHealth(PlayerPedId(-1)) <= 0 then
+			if working == true then
+				RemoveBlip(cokeCarBlip)
+			end
+			if delivering == true then
+				RemoveBlip(cokeDeliverBlip)
+			end
 			working = false
 			delivering = false
 			spawnAll = false
 			collecting = false
-			RemoveBlip(cokeCarBlip)
-			RemoveBlip(cokeDeliverBlip)
 		end
 		if delivering == true then
 			DrawMarker(1, Config.DeliverZone.x, Config.DeliverZone.y, Config.DeliverZone.z-1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 3.0, 1.0, 255, 255, 0, 80, false, true, 2, nil, nil, false)
@@ -139,7 +144,9 @@ function spawnCarNPCs()
 			gangPed.peds[i] = CreatePed(4, 'g_m_y_lost_01', v.x, v.y, v.z, v.heading, true, false)
 			GiveDelayedWeaponToPed(gangPed.peds[i], 'WEAPON_ASSAULTRIFLE', 1000, false)
 			SetPedArmour(gangPed.peds[i], 100)
-			SetPedCombatMovement(gangPed.peds[i], 0)
+			SetPedCombatRange(gangPed.peds[i], 2)
+			SetPedCombatMovement(gangPed.peds[i], 1)
+			SetPedShootRate(gangPed.peds[i], 1000)
 			SetPedCombatAbility(gangPed.peds[i], 2)
 			SetPedCombatAttributes(gangPed.peds[i], 46, true)
 			SetPedCombatAttributes(gangPed.peds[i], 0, true)
