@@ -4,7 +4,6 @@ local randomJobZone = 0
 local cokeCar = nil
 local gangPed = {}
 gangPed.peds = {}
-
 local cokeCarBlip = {}
 local cokeDeliverBlip = {}
 local working = false
@@ -19,6 +18,9 @@ Citizen.CreateThread(function()
 		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
 		Citizen.Wait(0)
 	end
+
+	PlayerData = ESX.GetPlayerData()
+
 end)
 
 RegisterNetEvent('esx:playerLoaded')
@@ -123,7 +125,7 @@ function insideCokeCar()
 end
 
 function spawnCarNPCs()
-	if GetDistanceBetweenCoords(Config.CarSpawnZones[randomJobZone].x, Config.CarSpawnZones[randomJobZone].y, Config.CarSpawnZones[randomJobZone].z, GetEntityCoords(PlayerPedId(-1)).x, GetEntityCoords(PlayerPedId(-1)).y, GetEntityCoords(PlayerPedId(-1)).z, false) < 100 and working == true and spawnAll == true then
+	if GetDistanceBetweenCoords(Config.CarSpawnZones[randomJobZone].x, Config.CarSpawnZones[randomJobZone].y, Config.CarSpawnZones[randomJobZone].z, GetEntityCoords(PlayerPedId(-1)).x, GetEntityCoords(PlayerPedId(-1)).y, GetEntityCoords(PlayerPedId(-1)).z, false) < 300 and working == true and spawnAll == true then
 		local cokeCarHash = GetHashKey('Burrito4')
 		RequestModel(cokeCarHash)
 		while not HasModelLoaded(cokeCarHash) do
@@ -145,8 +147,8 @@ function spawnCarNPCs()
 			GiveDelayedWeaponToPed(gangPed.peds[i], 'WEAPON_ASSAULTRIFLE', 1000, false)
 			SetPedArmour(gangPed.peds[i], 100)
 			SetPedCombatRange(gangPed.peds[i], 2)
-			SetPedCombatMovement(gangPed.peds[i], 1)
-			SetPedShootRate(gangPed.peds[i], 1000)
+			SetPedCombatMovement(gangPed.peds[i], 0)
+			SetPedShootRate(gangPed.peds[i], 500)
 			SetPedCombatAbility(gangPed.peds[i], 2)
 			SetPedCombatAttributes(gangPed.peds[i], 46, true)
 			SetPedCombatAttributes(gangPed.peds[i], 0, true)
@@ -196,3 +198,38 @@ function createCokeBlocks()
 	
 end
 
+RegisterNetEvent("esx_gonicoke:entornoPoli")
+AddEventHandler("esx_gonicoke:entornoPoli", function(source, args) 
+	local name = GetPlayerName(PlayerId())
+    local ped = GetPlayerPed(PlayerId())
+    local x, y, z = table.unpack(GetEntityCoords(ped, true))
+    local street = GetStreetNameAtCoord(x, y, z)
+    local location = GetStreetNameFromHashKey(street)
+	TriggerEvent('chatMessage', '', {255,255,255}, '^8 La policía también ha recibido un chivatazo date prisa!')
+	TriggerServerEvent('esx_gonicoke:entornoPoliPls', location, msg, x, y, z, tipo)
+end)
+
+RegisterNetEvent('esx_gonicoke:setBlip')
+AddEventHandler('esx_gonicoke:setBlip', function(x, y, z)
+	loadESX()
+	local blip = AddBlipForCoord(Config.CarSpawnZones[randomJobZone].x, Config.CarSpawnZones[randomJobZone].y, Config.CarSpawnZones[randomJobZone].z)
+	SetBlipSprite(blip, 4)
+	SetBlipScale(blip, 0.8)
+	SetBlipColour(blip, 1)
+	SetBlipDisplay(blip, 10)
+	BeginTextCommandSetBlipName("STRING")
+	AddTextComponentString('Aviso')
+	EndTextCommandSetBlipName(blip)
+	Wait(displayTime * 1000)
+	RemoveBlip(blip)
+end)
+
+function loadESX()
+	while ESX == nil do
+		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
+		Citizen.Wait(0)
+	end
+	while ESX.GetPlayerData().job == nil do
+		Citizen.Wait(0)
+	end
+end
